@@ -3,5 +3,4 @@ project(leetcode)
 
 set(CMAKE_CXX_STANDARD 14)
 
-add_executable(leetcode
-        leetcode/editor/cn/[215]数组中的第K个最大元素.cpp)
+        leetcode/editor/cn/[543]二叉树的直径.cpp)

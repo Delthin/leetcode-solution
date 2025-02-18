@@ -49,58 +49,29 @@ using namespace std;
   
 namespace solution2080{
 //leetcode submit region begin(Prohibit modification and deletion)
-class RangeFreqQuery {
-private:
-    vector<unordered_map<int, int>> tree;
-    void build(int node, int left, int right, vector<int>& arr) {
-        if (left == right) {
-            // if (!tree[node].count(arr[left])) {
-            //     tree[node][arr[left]] = 0;
-            // };
-            tree[node][arr[left]]++;
-            return;
+    class RangeFreqQuery {
+    private:
+        // 数值为键，出现下标数组为值的哈希表
+        unordered_map<int, vector<int>> occurence;
+
+    public:
+        RangeFreqQuery(vector<int>& arr) {
+            // 顺序遍历数组初始化哈希表
+            int n = arr.size();
+            for (int i = 0; i < n; ++i){
+                occurence[arr[i]].push_back(i);
+            }
         }
-        int mid = (left + right) / 2;
-        build(node * 2, left, mid, arr);
-        build(node * 2 + 1, mid + 1, right, arr);
-        for (auto& [key, value]: tree[node * 2]) {
-            // if (!tree[node].count(key)) {
-            //     tree[node][key] = 0;
-            // }
-            tree[node][key] += value;
+
+        int query(int left, int right, int value) {
+            // 查找对应的出现下标数组，不存在则为空
+            const vector<int>& pos = occurence[value];
+            // 两次二分查找计算子数组内出现次数
+            auto l = lower_bound(pos.begin(), pos.end(), left);
+            auto r = upper_bound(pos.begin(), pos.end(), right);
+            return r - l;
         }
-        for (auto& [key, value]: tree[node * 2 + 1]) {
-            // if (!tree[node].count(key)) {
-            //     tree[node][key] = 0;
-            // }
-            tree[node][key] += value;
-        }
-    }
-    int recur_query(int node, int left, int right, int value, int ori_left, int ori_right) {
-        if (left >= ori_left && right <= ori_right) {
-            return tree[node].count(value) ? tree[node][value] : 0;
-        }
-        int mid = (left + right) / 2;
-        int ret = 0;
-        if (ori_right > mid) {
-            ret += recur_query(node * 2 + 1, mid + 1, right, value, ori_left, ori_right);
-        }
-        if (ori_left <= mid) {
-            ret += recur_query(node * 2, left, mid, value, ori_left, ori_right);
-        }
-        return ret;
-    }
-public:
-    RangeFreqQuery(vector<int>& arr) {
-        int n = arr.size();
-        tree.resize((n << 1) + 1);
-        build(1, 0, n - 1, arr);
-    }
-    
-    int query(int left, int right, int value) {
-        return recur_query(1, left, right, value, left, right);
-    }
-};
+    };
 
 /**
  * Your RangeFreqQuery object will be instantiated and called as such:
@@ -113,8 +84,9 @@ public:
 
 using namespace solution2080;
 int main() {
-    vector<int> arr = {1,1,1,2,2};
+    vector<int> arr = {12, 33, 4, 56, 22, 2, 34, 33, 22, 12, 34, 56};
     auto rangeFreqQuery = new RangeFreqQuery(arr);
-    cout << rangeFreqQuery->query(0, 1, 2) << endl;
+    cout << rangeFreqQuery->query(1, 2, 4) << endl;
+    cout << rangeFreqQuery->query(0, 11, 33) << endl;
     return 0;
 }

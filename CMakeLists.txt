@@ -2,5 +2,6 @@ cmake_minimum_required(VERSION 3.29)
 project(leetcode)
 
 set(CMAKE_CXX_STANDARD 14)
-
-        leetcode/editor/cn/[543]二叉树的直径.cpp)
+add_executable(leetcode
+        leetcode/editor/cn/[2080]区间内查询数字的频率.cpp
+)

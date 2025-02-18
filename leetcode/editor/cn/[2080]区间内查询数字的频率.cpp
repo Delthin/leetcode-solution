@@ -76,28 +76,29 @@ private:
             tree[node][key] += value;
         }
     }
-    int recur_query(int node, int left, int right, int value) {
-        if (left == right) {
+    int recur_query(int node, int left, int right, int value, int ori_left, int ori_right) {
+        if (left >= ori_left && right <= ori_right) {
             return tree[node].count(value) ? tree[node][value] : 0;
         }
         int mid = (left + right) / 2;
-        if (right <= mid) {
-            return recur_query(node * 2, left, mid, value);
-        } else if (left > mid) {
-            return recur_query(node * 2 + 1, mid + 1, right, value);
-        } else {
-            return recur_query(node * 2, left, mid, value) + recur_query(node * 2 + 1, mid + 1, right, value);
+        int ret = 0;
+        if (ori_right > mid) {
+            ret += recur_query(node * 2 + 1, mid + 1, right, value, ori_left, ori_right);
         }
+        if (ori_left <= mid) {
+            ret += recur_query(node * 2, left, mid, value, ori_left, ori_right);
+        }
+        return ret;
     }
 public:
     RangeFreqQuery(vector<int>& arr) {
         int n = arr.size();
-        tree.resize(n << 1 + 1);
+        tree.resize((n << 1) + 1);
         build(1, 0, n - 1, arr);
     }
     
     int query(int left, int right, int value) {
-        return recur_query(1, left, right, value);
+        return recur_query(1, left, right, value, left, right);
     }
 };
 

@@ -3,5 +3,5 @@ project(leetcode)
 
 set(CMAKE_CXX_STANDARD 14)
 add_executable(leetcode
-        leetcode/editor/cn/[2080]区间内查询数字的频率.cpp
+        leetcode/editor/cn/[209]长度最小的子数组.cpp
 )

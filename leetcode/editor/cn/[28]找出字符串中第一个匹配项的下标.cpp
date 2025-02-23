@@ -39,28 +39,37 @@ using namespace std;
   
 namespace solution28{
 //leetcode submit region begin(Prohibit modification and deletion)
-class Solution {
-public:
-    int strStr(string haystack, string needle) {
-        for (int i = 0; i < haystack.size(); i++) {
-            if (haystack[i] == needle[0]) {
-                int j = 1;
-                for (; j < needle.size(); j++) {
-                    if (haystack[i + j] != needle[j]) {
-                        break;
-                    }
+    class Solution {
+    public:
+        int strStr(string haystack, string needle) {
+            int n = haystack.size(), m = needle.size();
+            if (m == 0) {
+                return 0;
+            }
+            vector<int> pi(m);
+            for (int i = 1, j = 0; i < m; i++) {
+                while (j > 0 && needle[i] != needle[j]) {
+                    j = pi[j - 1];
                 }
-                if (j == needle.size()) {
-                    return i;
+                if (needle[i] == needle[j]) {
+                    j++;
                 }
-                if (i < haystack.size() - 1 && haystack[i] != haystack[i + 1]) {
-                    i += j;
+                pi[i] = j;
+            }
+            for (int i = 0, j = 0; i < n; i++) {
+                while (j > 0 && haystack[i] != needle[j]) {
+                    j = pi[j - 1];
+                }
+                if (haystack[i] == needle[j]) {
+                    j++;
+                }
+                if (j == m) {
+                    return i - m + 1;
                 }
             }
+            return -1;
         }
-        return -1;
-    }
-};
+    };
 //leetcode submit region end(Prohibit modification and deletion)
 
 }

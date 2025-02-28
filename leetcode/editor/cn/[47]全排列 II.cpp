@@ -39,9 +39,33 @@ using namespace std;
 namespace solution47{
 //leetcode submit region begin(Prohibit modification and deletion)
 class Solution {
+private:
+    vector<vector<int>> ret;
+    vector<int> path;
+    void backTrace (vector<int>& nums, vector<bool>& used) {
+        if (path.size() == nums.size()) {
+            ret.emplace_back(path);
+            return;
+        }
+        for (int i = 0; i< nums.size(); i++) {
+            if (i > 0 && nums[i] == nums[i - 1] && used[i - 1] == false) {
+                continue;
+            }
+            if (used[i] == false) {
+                used[i] = true;
+                path.emplace_back(nums[i]);
+                backTrace(nums, used);
+                path.pop_back();
+                used[i] = false;
+            }
+        }
+    }
 public:
     vector<vector<int>> permuteUnique(vector<int>& nums) {
-        
+        sort(nums.begin(), nums.end()); // 排序
+        vector<bool> used(nums.size(), false);
+        backTrace(nums, used);
+        return ret;
     }
 };
 //leetcode submit region end(Prohibit modification and deletion)

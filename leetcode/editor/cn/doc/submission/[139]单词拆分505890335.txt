@@ -1,0 +1,62 @@
+import java.util.HashSet;
+class Solution {
+    public boolean wordBreak(String s, List<String> wordDict) {
+        int strlen = s.length();
+        boolean [] dp = new boolean[strlen];
+        for(int i = 0; i < strlen; i++){
+            Set<Integer> lens = contain(s, wordDict, i);
+            dp[i] = false;
+            for(int len : lens){
+                if (i + 1 - len == 0 || dp[i - len] == true){
+                    dp[i] = true;
+                    break;
+                }
+            }
+        }
+        return dp[strlen - 1];
+    }
+        private HashSet<Integer> contain(String s, List<String> wordDict, int index){
+        HashSet<Integer> lens = new HashSet();
+        for (String word : wordDict){
+            int len = word.length();
+            if (index + 1 - len >= 0 && s.substring(index + 1 - len, index + 1).equals(word)){
+                lens.add(len);
+            }
+        }
+        return lens;
+    }
+    //     public boolean wordBreak(String s, List<String> wordDict) {
+    //     Collections.reverse(wordDict);
+    //     return wordBreak(s, wordDict, 0);
+    // }
+    // private boolean wordBreak(String s, List<String> wordDict, int index){
+    //     if (index == s.length()){
+    //         return true;
+    //     }
+    //     HashSet<Integer> lens = contain(s, wordDict, index);
+    //     if (lens.size() == 0){
+    //         return false;
+    //     }
+    //     boolean flag = false;
+    //     for(int len : lens){
+    //         if (wordBreak(s, wordDict, index + len)){
+    //             flag = true;
+    //             break;
+    //         }
+    //     }
+    //     return flag;
+    // }
+    // private HashSet<Integer> contain(String s, List<String> wordDict, int index){
+    //     HashSet<Integer> lens = new HashSet();
+    //     for (String word : wordDict){
+    //         int len = word.length();
+    //         if (index + len <= s.length() && s.substring(index, index + len).equals(word)){
+    //             lens.add(len);
+    //         }
+    //     }
+    //     return lens;
+    // }
+
+}
+//runtime:3 ms
+//memory:43.2 MB

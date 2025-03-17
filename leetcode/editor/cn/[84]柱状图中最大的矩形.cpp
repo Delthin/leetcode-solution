@@ -46,27 +46,18 @@ public:
         // nums[i]小于top，弹所有大的
         // 等于同大于，更新
         // 每次压栈存{i};
-        int last_zero_idx = -1;
-        for (int i = heights.size() - 1; i >= 0; i--) {
-            if (heights[i] == 0) {
-                last_zero_idx = i;
-            }
-        }
-        int ans = *min_element(heights.begin() + last_zero_idx + 1, heights.end()) * (heights.size() - last_zero_idx - 1);
+        int ans = 0;
         stack<int> st;
+        heights.insert(heights.begin(), 0);
+        heights.push_back(0);
         for (int i = 0; i < heights.size(); i++) {
             while (!st.empty() && heights[i] < heights[st.top()]) {
-                ans = max(ans, heights[st.top()] * (i - st.top()));
+                // 算弹出的左右
+                int h = heights[st.top()];
                 st.pop();
+                ans = max(ans, h * (i - st.top() - 1));
             }
-            int left_index = st.empty() ? -1 : st.top();
-            ans = max(ans, heights[i] * (i - left_index));
             st.emplace(i);
-        }
-        while (!st.empty()) {
-            int h = heights[st.top()];
-            ans = max(ans, static_cast<int>(h * (heights.size() - st.top())));
-            st.pop();
         }
         return ans;
     }
@@ -78,6 +69,7 @@ public:
 using namespace solution84;
 int main() {
     Solution solution;
-
+    vector<int> heights = {2, 1, 2};
+    cout << solution.largestRectangleArea(heights);
     return 0;
 }

@@ -133,7 +133,6 @@ public:
             while (!person_q.empty()) {
                 // 人先移动
                 int person_size = person_q.size();
-                bool can_move = false;
 
                 for (int i = 0; i < person_size; i++) {
                     auto [x, y] = person_q.front();
@@ -151,13 +150,9 @@ public:
                         if (nx >= 0 && nx < m && ny >= 0 && ny < n && g[nx][ny] == 0 && !person[nx][ny]) {
                             person[nx][ny] = true;
                             person_q.emplace(nx, ny);
-                            can_move = true;
                         }
                     }
                 }
-
-                // 如果人无法移动，失败
-                if (!can_move && !person_q.empty()) return false;
 
                 // 火蔓延
                 int fire_size = fire_q.size();

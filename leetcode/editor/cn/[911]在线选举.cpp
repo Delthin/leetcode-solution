@@ -55,36 +55,30 @@ using namespace std;
   
 namespace solution911{
 //leetcode submit region begin(Prohibit modification and deletion)
-class TopVotedCandidate {
-private:
-    unordered_map<int, vector<int>> um;
-public:
-    TopVotedCandidate(vector<int>& persons, vector<int>& times) {
-        for (int i = 0; i < persons.size(); i++) {
-            um[persons[i]].emplace_back(times[i]);
-        }
-    }
-    
-    int q(int t) {
-        int person = -1;
-        int time = -1;
-        int maxT = 0;
-        for (auto&[p, vec]: um) {
-            int ticket = upper_bound(vec.begin(), vec.end(), t) - vec.begin();
-            if (ticket > maxT) {
-                person = p;
-                time = vec[ticket - 1];
-                maxT = ticket;
-            } else if (ticket == maxT && ticket > 0) {
-                if (vec[ticket - 1] > time) {
-                    person = p;
-                    time = vec[ticket - 1];
+    class TopVotedCandidate {
+    public:
+        vector<int> tops;
+        vector<int> times;
+
+        TopVotedCandidate(vector<int>& persons, vector<int>& times) {
+            unordered_map<int, int> voteCounts;
+            voteCounts[-1] = -1;
+            int top = -1;
+            for (auto & p : persons) {
+                voteCounts[p]++;
+                if (voteCounts[p] >= voteCounts[top]) {
+                    top = p;
                 }
+                tops.emplace_back(top);
             }
+            this->times = times;
         }
-        return person;
-    }
-};
+
+        int q(int t) {
+            int pos = upper_bound(times.begin(), times.end(), t) - times.begin() - 1;
+            return tops[pos];
+        }
+    };
 
 /**
  * Your TopVotedCandidate object will be instantiated and called as such:

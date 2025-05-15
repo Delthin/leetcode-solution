@@ -65,7 +65,7 @@ namespace solution1648{
 class Solution {
 private:
     long long progress(long long l, long long r) {
-        return (r + l + 1) * (r - l) / 2;
+        return (r + l) * (r - l + 1) / 2;
     }
 public:
     int maxProfit(vector<int>& inventory, int orders) {
@@ -74,7 +74,8 @@ public:
         auto check = [&] (int num) {
             long long total = 0;
             for (long long invent: inventory) {
-                total += max(0LL, invent - num);
+                if (invent <= num) break;
+                total += invent - num;
             }
             return total <= orders;
         };
@@ -87,13 +88,13 @@ public:
         long long ans = 0;
         long long left = orders;
         for (long long invent : inventory) {
-            if (invent <= l) break;
+            if (invent <= r) break;
             // 左开右闭
-            ans += progress(l, invent);
+            ans += progress(r + 1, invent);
             ans %= 1'000'000'007;
-            left -= invent - l;
+            left -= invent - r;
         }
-        ans += left * l;
+        ans += left * r;
         ans %= 1'000'000'007;
         return ans;
     }

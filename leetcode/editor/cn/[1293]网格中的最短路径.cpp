@@ -54,37 +54,44 @@ class Solution {
     bool inArea(vector<vector<int>>& g, int x, int y) {
         return x >= 0 && x < g.size() && y >= 0 && y < g[0].size();
     }
+    struct state {
+        int x;
+        int y;
+        int k;
+        state(int _x, int _y, int _k) : x(_x), y(_y), k(_k){
+        }
+    };
 public:
     int shortestPath(vector<vector<int>>& grid, int k) {
         int m = grid.size();
         int n = grid[0].size();
-        queue<pair<int, int>> q1;
-        queue<pair<int, int>> q2;
-        vector<vector<bool>> vis(m, (vector<bool>(n, false)));
-        vector<vector<int>> dis(m, (vector<int>(n, INT_MAX)));
+        queue<state> q;
+        vector<vector<vector<bool>>> vis(m, (vector<vector<bool>>(n,vector<bool>(k + 1, false))));
 
-        // 第一轮，从起点往障碍边界遍历
-        q1.emplace(0, 0);
-        vis[0][0] = true;
-        dis[0][0] = 0;
-        while (!q1.empty()) {
-            auto [x, y] = q1.front();
-            q1.pop();
-            if (grid[x][y] == 1) {
-                q2.emplace(x, y);
-                continue;
-            }
-            for (auto& [dx, dy]: DIR) {
-                int nx = x + dx, ny = y + dy;
-                if (inArea(grid, nx, ny) && vis[nx][ny] == false) {
-                    q1.emplace(nx, ny);
-                    vis[nx][ny] = true;
-                    dis[nx][ny] = dis[x][y] + 1;
+        q.emplace(0, 0, 0);
+        vis[0][0][0] = true;
+        for (int step = 0; !q.empty(); step++) {
+            int size = q.size();
+            for (int _ = 0; _ < size; _++) {
+                auto [x, y, rest] = q.front();
+                q.pop();
+                if (x == m - 1 && y == n - 1) return step;
+
+                for (auto& [dx, dy]: DIR) {
+                    int nx = x + dx, ny = y + dy;
+                    if (inArea(grid, nx, ny)) {
+                        if (grid[nx][ny] == 0 && !vis[nx][ny][rest]) {
+                            q.emplace(nx, ny, rest);
+                            vis[nx][ny][rest] = true;
+                        } else if (grid[nx][ny] == 1 && rest < k && !vis[nx][ny][rest + 1]){
+                            q.emplace(nx, ny, rest + 1);
+                            vis[nx][ny][rest + 1] = true;
+                        }
+                    }
                 }
             }
         }
-
-        return
+        return -1;
     }
 };
 //leetcode submit region end(Prohibit modification and deletion)

@@ -53,33 +53,22 @@ class Solution {
 private:
     vector<string> path;
     unordered_map<string, map<string, int>> adj;
-    bool dfs(const string& first, int totalLen) {
-        if (totalLen == path.size()) {
-            return true;
-        }
-        if (!adj.count(first) || adj[first].empty()) {
-            return false;
-        }
+    void dfs(const string& first) {
         for (auto& [target, times]: adj[first]) {
-            if (times > 0) {
-                path.emplace_back(target);
-                times--;
-                if (dfs(target, totalLen)) {
-                    return true;
-                }
-                path.pop_back();
-                times++;
+            if (adj[first][target] > 0) {
+                adj[first][target]--;
+                dfs(target);
             }
         }
-        return false;
+        path.emplace_back(first);
     }
 public:
     vector<string> findItinerary(vector<vector<string>>& tickets) {
         for (const vector<string>& ticket: tickets) {
             adj[ticket[0]][ticket[1]]++;
         }
-        path.emplace_back("JFK");
-        dfs("JFK", tickets.size() + 1);
+        dfs("JFK");
+        reverse(path.begin(), path.end());
         return path;
     }
 };

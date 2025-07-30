@@ -40,34 +40,49 @@ using namespace std;
 namespace solution28{
 //leetcode submit region begin(Prohibit modification and deletion)
     class Solution {
+        vector<int> compute_next(const string& p) {
+            if (p.empty()) return {};
+            vector<int> next(p.length());
+            for (int i = 1, j = 0; i < p.length(); i++) {
+                while (j > 0 && p[i] != p[j]) {
+                    j = next[j - 1];
+                }
+                if (p[i] == p[j]) {
+                    j++;
+                }
+                next[i] = j;
+            }
+            return next;
+        }
+
+        // 在文本串s中查找模式串p的所有出现位置 (返回0-indexed的起始下标)
+        vector<int> kmp_search(const string& s, const string& p) {
+            if (p.empty() || s.length() < p.length()) return {};
+
+            vector<int> next = compute_next(p);
+            vector<int> result;
+
+            for (int i = 0, j = 0; i < s.length(); i++) {
+                while (j > 0 && s[i] != p[j]) {
+                    j = next[j - 1];
+                }
+                if (s[i] == p[j]) {
+                    j++;
+                }
+                if (j == p.length()) {
+                    result.push_back(i - j + 1);
+                    j = next[j - 1]; // 继续寻找下一个匹配
+                }
+            }
+            return result;
+        }
     public:
         int strStr(string haystack, string needle) {
-            int n = haystack.size(), m = needle.size();
-            if (m == 0) {
-                return 0;
+            vector<int> result = kmp_search(haystack, needle);
+            if (result.empty()) {
+                return -1;
             }
-            vector<int> pi(m);
-            for (int i = 1, j = 0; i < m; i++) {
-                while (j > 0 && needle[i] != needle[j]) {
-                    j = pi[j - 1];
-                }
-                if (needle[i] == needle[j]) {
-                    j++;
-                }
-                pi[i] = j;
-            }
-            for (int i = 0, j = 0; i < n; i++) {
-                while (j > 0 && haystack[i] != needle[j]) {
-                    j = pi[j - 1];
-                }
-                if (haystack[i] == needle[j]) {
-                    j++;
-                }
-                if (j == m) {
-                    return i - m + 1;
-                }
-            }
-            return -1;
+            return result[0];
         }
     };
 //leetcode submit region end(Prohibit modification and deletion)

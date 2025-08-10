@@ -1,7 +1,6 @@
-// 有两个测试点没过，不知道啥原因
-
 #include <bits/stdc++.h>
 using namespace std;
+using ll = long long;
 
 vector<int> topological_sort(vector<vector<int>>& adj, vector<int>& in_degree, vector<int>& items) {
     queue<int> q;
@@ -59,18 +58,18 @@ int main() {
     }
     vector<int> topo_order = topological_sort(adj, in_degree, items);
     vector<int> topo_order_reverse = topological_sort(adj_reverse, out_degree, items);
-    vector<int> earliest(n, 0);
+    vector<ll> earliest(n, 0);
     for (int u : topo_order) {
         for (int v : adj[u]) {
             earliest[v] = max(earliest[v], earliest[u] + cost[u]);
         }
     }
-    int end_time = 0;
+    ll end_time = 0;
     for (int i = 0; i < n; i++) {
-        end_time = max(end_time, earliest[i] + cost[i]);
+        end_time = max(end_time, (ll)earliest[i] + cost[i]);
     }
 
-    vector<int> latest(n, end_time);
+    vector<ll> latest(n, end_time);
     for (int i = 0; i < n; i++) {
         latest[i] -= cost[i];
     }
@@ -82,7 +81,7 @@ int main() {
     const int MOD = 1e9 + 7;
     long long ans = 1;
     for (int i = 0; i < n; i++) {
-        ans = ans * (long long)(latest[i] - earliest[i] + 1) % MOD;
+        ans = ans * (latest[i] - earliest[i] + 1) % MOD;
     }
     cout << end_time << endl;
     cout << ans << endl;

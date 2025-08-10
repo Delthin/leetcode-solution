@@ -126,11 +126,18 @@ void pull(Node* t) { // pushup: 从子节点更新父节点信息
     if (t->r) t->sum += t->r->sum;
 }
 
+void apply_rev(Node* t) {
+    if (!t) return;
+    // 1. 更新/翻转懒标记
+    t->rev_tag ^= 1;
+    // 2. 立刻应用结构变化
+    swap(t->l, t->r);
+}
+
 void push(Node* t) { // pushdown: 下传懒标记
     if (!t || !t->rev_tag) return;
-    swap(t->l, t->r);
-    if (t->l) t->l->rev_tag ^= 1;
-    if (t->r) t->r->rev_tag ^= 1;
+    apply_rev(t->l);
+    apply_rev(t->r);
     t->rev_tag = false;
 }
 
@@ -171,7 +178,7 @@ Node* merge(Node* a, Node* b) {
 
 void reverse_lazy(Node*& root) {
     if (!root) return;
-    root->rev_tag ^= 1;
+    apply_rev(root);
 }
 
 struct MyStack {

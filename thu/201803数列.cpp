@@ -1,138 +1,153 @@
 // 平衡树做法ak
 #include <bits/stdc++.h>
 using namespace std;
+
+mt19937 rng(chrono::steady_clock::now().time_since_epoch().count());
+
 struct Node {
-    int val, sz;
-    int cnt[3];
-    int add;           // 懒标记：+add (mod 3)
-    bool rev;          // 懒标记：翻转
-    unsigned pri;
-    Node *l, *r;
-    Node(int v): val(v), sz(1), add(0), rev(false),
-                 pri(((unsigned)rand()<<16)^rand()), l(nullptr), r(nullptr) {
-        cnt[0]=cnt[1]=cnt[2]=0;
-        ++cnt[v];
+    Node *l=nullptr, *r=nullptr;
+    int val=0, sz=1; // val: 节点值, sz: 子树大小
+    vector<int>cnt;
+    unsigned pri;    // 随机优先级
+    bool rev_tag=false; // 翻转懒标记
+    int add_tag=0;
+    // --- 扩展点: 在此添加其他维护信息, 如 sum, max_v ---
+    // long long sum = 0;
+
+    explicit Node(int v) : val(v), pri(rng()) {
+        // --- 扩展点: 在此初始化新信息 ---
+        // sum = v;
+        cnt.resize(3, 0);
+        cnt[v] = 1;
     }
 };
-using pNode = Node*;
 
-int getsz(pNode t){ return t? t->sz : 0; }
-void pull(pNode t){
-    if(!t) return;
-    t->sz = 1 + getsz(t->l) + getsz(t->r);
-    t->cnt[0] = t->cnt[1] = t->cnt[2] = 0;
-    if(t->l){
-        t->cnt[0]+=t->l->cnt[0];
-        t->cnt[1]+=t->l->cnt[1];
-        t->cnt[2]+=t->l->cnt[2];
+int size(Node* t) { return t ? t->sz : 0; }
+
+void pull(Node* t) { // pushup: 从子节点更新父节点信息
+    if (!t) return;
+    t->sz = 1 + size(t->l) + size(t->r);
+    t->cnt = {0, 0, 0};
+    if (t->l) {
+        for (int i = 0; i < 3; i++) {
+            t->cnt[i] += t->l->cnt[i];
+        }
     }
-    ++t->cnt[t->val];
-    if(t->r){
-        t->cnt[0]+=t->r->cnt[0];
-        t->cnt[1]+=t->r->cnt[1];
-        t->cnt[2]+=t->r->cnt[2];
+    if (t->r) {
+        for (int i = 0; i < 3; i++) {
+            t->cnt[i] += t->r->cnt[i];
+        }
+    }
+    t->cnt[t->val]++;
+}
+
+void apply_add(Node* t, int val_to_add) {
+    if (!t || val_to_add == 0) return;
+    int shift = val_to_add % 3;
+
+    t->add_tag += val_to_add; // 更新 tag
+
+    // 立刻更新 val 和 cnt
+    t->val = (t->val + shift) % 3;
+    vector<int> old_cnt = t->cnt;
+    for (int i = 0; i < 3; i++) {
+        t->cnt[(i + shift) % 3] = old_cnt[i];
     }
 }
-void apply_add(pNode t,int a){
-    if(!t) return;
-    t->add = (t->add + a)%3;
-    t->val = (t->val + a)%3;
-    // 循环移位 cnt 数组
-    int tmp[3]={t->cnt[0],t->cnt[1],t->cnt[2]};
-    for(int i=0;i<3;i++)
-        t->cnt[(i+a)%3]=tmp[i];
+
+void apply_rev(Node* t) {
+    if (!t) return;
+    swap(t->l, t->r);
+    t->rev_tag ^= 1;
 }
-void apply_rev(pNode t){
-    if(!t) return;
-    t->rev^=1;
-    swap(t->l,t->r);
-}
-void push(pNode t){
-    if(!t) return;
-    if(t->add){
-        apply_add(t->l,t->add);
-        apply_add(t->r,t->add);
-        t->add=0;
-    }
-    if(t->rev){
+
+// 你的 push 也要相应修改，因为它只负责传递，应用效果的事情 apply_add_immediately 会做
+void push(Node* t) {
+    if (!t) return;
+    if (t->rev_tag) {
         apply_rev(t->l);
         apply_rev(t->r);
-        t->rev=false;
+        t->rev_tag = false;
+    }
+    if (t->add_tag != 0) {
+        if (t->add_tag % 3 == 0) {
+            t->add_tag = 0;
+            return;
+        }
+        // push 只负责把 tag 传递下去，并让子节点立刻更新
+        apply_add(t->l, t->add_tag);
+        apply_add(t->r, t->add_tag);
+        t->add_tag = 0;
     }
 }
-void split(pNode t,int k,pNode& a,pNode& b){//前k个进a
-    if(!t){a=b=nullptr; return;}
+
+Node* merge(Node* a, Node* b) {
+    if (!a || !b) return a ? a : b;
+    if (a->pri < b->pri) { // 设 pri 越小优先级越高
+        push(a); a->r = merge(a->r, b); pull(a); return a;
+    } else {
+        push(b); b->l = merge(a, b->l); pull(b); return b;
+    }
+}
+
+void split_by_rank(Node* t, int k, Node*& a, Node*& b) {
+    if (!t) { a = b = nullptr; return; }
     push(t);
-    if(getsz(t->l)>=k){
-        split(t->l,k,a,t->l);
-        b=t;
-    }else{
-        split(t->r,k-getsz(t->l)-1,t->r,b);
-        a=t;
-    }
-    pull(t);
-}
-pNode merge(pNode a,pNode b){
-    if(!a||!b) return a?a:b;
-    if(a->pri < b->pri){
-        push(a);
-        a->r = merge(a->r,b);
-        pull(a);
-        return a;
-    }else{
-        push(b);
-        b->l = merge(a,b->l);
-        pull(b);
-        return b;
+    if (size(t->l) >= k) {
+        b = t; split_by_rank(t->l, k, a, b->l); pull(b);
+    } else {
+        a = t; split_by_rank(t->r, k - size(t->l) - 1, a->r, b); pull(a);
     }
 }
-// ------------------------------------------------------------
-// 4 种操作
-// 1) 单点赋值
-void pointSet(pNode& root,int pos,int x){
-    pNode a,b,c;
-    split(root,pos-1,a,b);
-    split(b,1,b,c);              // b 是目标点
-    if(b){
+
+void point_set(Node*& root, int i, int x) {
+    Node *a, *b, *c;
+    split_by_rank(root, i - 1, a, b);
+    split_by_rank(b, 1, b, c);
+    if (b) {
         b->val = x;
-        b->cnt[0]=b->cnt[1]=b->cnt[2]=0;
-        ++b->cnt[x];
-    }else b=new Node(x);         // 理论上不会走到
-    pull(b);
-    root = merge(merge(a,b),c);
+        pull(b);// 维护类似sum的区间信息
+    }
+    root = merge(a, merge(b, c));
 }
-// 2) 区间 +1 (mod3)
-void rangeAdd(pNode& root,int l,int r){
-    pNode a,b,c;
-    split(root,l-1,a,b);
-    split(b,r-l+1,b,c);
-    apply_add(b,1);
-    root = merge(merge(a,b),c);
+
+void range_add(Node*& root, int l, int r, int val) {
+    if (l > r) return;
+    Node *a, *b, *c;
+    split_by_rank(root, l - 1, a, b);
+    split_by_rank(b, r - l + 1, b, c);
+    if (b) {
+        apply_add(b, val);
+    }
+    root = merge(merge(a, b), c);
 }
-// 3) 区间翻转
-void rangeRev(pNode& root,int l,int r){
-    pNode a,b,c;
-    split(root,l-1,a,b);
-    split(b,r-l+1,b,c);
-    apply_rev(b);
-    root = merge(merge(a,b),c);
+
+void reverse_interval(Node*& root, int l, int r) {
+    if (l >= r) return;
+    Node *a, *b, *c;
+    split_by_rank(root, l - 1, a, b);
+    split_by_rank(b, r - l + 1, b, c);
+    if (b) apply_rev(b);
+    root = merge(merge(a, b), c);
 }
-// 4) 查询 >=3 个相同数字？
-bool rangeQuery(pNode& root,int l,int r){
-    pNode a,b,c;
-    split(root,l-1,a,b);
-    split(b,r-l+1,b,c);
-    bool ok = (b->cnt[0]>=3||b->cnt[1]>=3||b->cnt[2]>=3);
-    root = merge(merge(a,b),c);
-    return ok;
+
+bool range_query(Node*& root, int l, int r) {
+    if (l > r) return false;
+    Node *a, *b, *c;
+    split_by_rank(root, l - 1, a, b);
+    split_by_rank(b, r - l + 1, b, c);
+    bool result = false;
+    if (b) {
+        result = b->cnt[0] >= 3 || b->cnt[1] >= 3 || b->cnt[2] >= 3;
+    }
+    root = merge(merge(a, b), c);
+    return result;
 }
-// ------------------------------------------------------------
+
 int main(){
-    ios::sync_with_stdio(false);
-    cin.tie(nullptr);
-    srand((unsigned)chrono::high_resolution_clock::now().time_since_epoch().count());
-    int n;  cin>>n;
-    pNode root=nullptr;
+    int n;
+    cin>>n;
+    Node* root = nullptr;
     for(int i=0,x;i<n;i++){
         cin>>x;
         root = merge(root,new Node(x));
@@ -141,13 +156,13 @@ int main(){
     while(q--){
         int op,l,r; cin>>op>>l>>r;
         if(op==1){                 // 1 i x
-            pointSet(root,l,r);    // 注意题面已经把 x 读到 r 里
+            point_set(root,l,r);    // 注意题面已经把 x 读到 r 里
         }else if(op==2){           // 2 i j
-            rangeAdd(root,l,r);
+            range_add(root,l, r, 1);
         }else if(op==3){           // 3 i j
-            rangeRev(root,l,r);
+            reverse_interval(root,l,r);
         }else{                     // 4 i j
-            cout<<(rangeQuery(root,l,r)?"yes\n":"no\n");
+            cout<<(range_query(root,l,r)?"yes\n":"no\n");
         }
     }
     return 0;

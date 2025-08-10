@@ -24,11 +24,18 @@ void pull(Node* t) { // pushup: 从子节点更新父节点信息
     t->sz = 1 + size(t->l) + size(t->r);
 }
 
+void apply_add(Node* t, ll val_to_add) {
+    if (!t || val_to_add == 0) return;
+    // 1. 更新节点自身的懒标记 (累加)
+    t->lazy_add += val_to_add;
+    // 2. 立刻更新节点自身的个体信息 (val)
+    t->level+= val_to_add;
+}
+
 void push(Node* t) {
     if (!t || t->lazy_add == 0) return; // 优化：懒标记为0就不用下传
-    t->level += t->lazy_add;
-    if (t->l) t->l->lazy_add += t->lazy_add;
-    if (t->r) t->r->lazy_add += t->lazy_add;
+    apply_add(t->l, t->lazy_add);
+    apply_add(t->r, t->lazy_add);
     t->lazy_add = 0;
 }
 
@@ -38,10 +45,11 @@ void split_by_rank(Node* t, int k, Node*& a, Node*& b) {
     if (!t) { a = b = nullptr; return; }
     push(t);
     if (size(t->l) >= k) {
-        b = t; split_by_rank(t->l, k, a, b->l); pull(b);
+        b = t; split_by_rank(t->l, k, a, b->l);
     } else {
-        a = t; split_by_rank(t->r, k - size(t->l) - 1, a->r, b); pull(a);
+        a = t; split_by_rank(t->r, k - size(t->l) - 1, a->r, b);
     }
+    pull(t);
 }
 
 // 按权值分裂
@@ -49,10 +57,11 @@ void split_by_val(Node* t, ll v, Node*& a, Node*& b) {
     if (!t) { a = b = nullptr; return; }
     push(t);
     if (t->level <= v) {
-        a = t; split_by_val(t->r, v, a->r, b); pull(a);
+        a = t; split_by_val(t->r, v, a->r, b);
     } else {
-        b = t; split_by_val(t->l, v, a, b->l); pull(b);
+        b = t; split_by_val(t->l, v, a, b->l);
     }
+    pull(t);
 }
 
 Node* merge(Node* a, Node* b) {
@@ -108,7 +117,7 @@ Node* union_trees(Node* a, Node* b) {
     if (!a || !b) return a ? a : b;
 
     // 确保 a 的优先级更高
-    if (a->pri < b->pri) swap(a, b);
+    if (a->pri > b->pri) swap(a, b);
 
     push(a);
 
@@ -142,8 +151,7 @@ void op2() {
     int x, v;
     cin >> x >> v;
     Node* root = roots[x];
-    if (root) (root)->lazy_add += v;
-    roots[x] = root;
+    if (root) apply_add(root, v);
 }
 
 void op3() {
@@ -173,7 +181,7 @@ void op4() {
     }
     int mid_rank = (root->sz + 1) / 2;
     Node* mid_node = get_kth_node(root, mid_rank);
-    cout << mid_node->level << endl;
+    cout << get_node_val(mid_node) << endl;
 }
 
 void op5() {

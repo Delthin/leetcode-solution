@@ -3,67 +3,16 @@ using namespace std;
 using ll = long long;
 
 int n;
-
 struct Node {
     int a = 0;
     int l = 0, r = 0;
     Node(int a, int id): a(a) {
     }
 };
-
 Node* root;
 vector<Node*> nodes;
-
-// vector<int> get_preorder() {
-//     vector<int> preorder;
-//     preorder.push_back(0);
-//     function<void(Node*)> dfs = [&](Node* node) {
-//         preorder.push_back(node->id);
-//         if (node->l) dfs(node->l);
-//         if (node->r) dfs(node->r);
-//     };
-//     dfs(root);
-//     return preorder;
-// }
-//
-// ll get_ans() {
-//     auto preorder = get_preorder();
-//     ll ans = 0;
-//     int prev_a = nodes[1]->a;
-//     for (int i = 2; i <= n; i++) {
-//         int now_a = nodes[preorder[i]]->a;
-//         ans += abs(now_a - prev_a);
-//         prev_a = now_a;
-//     }
-//     return ans;
-// }
-//
-// void solve() {
-//     vector<Node*> swappable_nodes;
-//     for (int i = 1; i <= n; ++i) {
-//         if (nodes[i]->l && nodes[i]->r) {
-//             swappable_nodes.push_back(nodes[i]);
-//         }
-//     }
-//     ll ans = LONG_LONG_MAX;
-//     function<void(int k)> dfs = [&](int k) {
-//         if (k == swappable_nodes.size()) {
-//             ans = min(get_ans(), ans);
-//             return;
-//         }
-//         Node* node = swappable_nodes[k];
-//         dfs(k + 1);
-//         swap(node->l, node->r);
-//         dfs(k + 1);
-//         swap(node->r, node->r);
-//     };
-//     dfs(0);
-//     cout << ans << endl;
-// }
-
 vector<vector<ll>> dp;
 vector<vector<int>> leaves;
-
 // DFS 预处理，得到每个子树包含的节点列表
 void get_leaves(int u) {
     if (u == 0) return;
@@ -128,8 +77,6 @@ void solve2() {
     leaves.resize(n + 1);
     get_leaves(1);
     // dp[i][j] 表示以 i 为根，末端为 j 的最小平滑值
-    // dp[i][j] = abs(a_i - a_i->l) + dp[i->l][i->l->end] + abs(a_i->l->end - a_i->r) + dp[i->r][i->r->end];
-    // for(int
     dp_dfs(1);
     ll ans = LONG_LONG_MAX;
     for (int leaf: leaves[1]) {

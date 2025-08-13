@@ -49,30 +49,62 @@ void remove(int i, int k) {
     }
 }
 
+inline void write(ll x) {
+    if (x < 0) {
+        putchar('-');  // 输出负号
+        x = -x;        // 转为正数处理
+    }
+    static int sta[35];
+    int top = 0;
+    do {
+        sta[top++] = x % 10;
+        x /= 10;
+    } while (x);
+    while (top) putchar(sta[--top] + '0');  // '0'的ASCII码是48，更直观
+}
+
 void query(int i) {
     ll res = -1;
     if (!candidates[i].empty()) {
         res = candidates[i].begin()->second;
     }
-    cout << res << "\n";
+    write(res);
+    putchar('\n');
+}
+
+inline void read(int &n) {
+    int x = 0, f = 1;
+    char ch = getchar();
+    while (ch < '0' || ch > '9') {
+        if (ch == '-') { f = -1; }
+        ch = getchar();
+    }
+    while (ch >= '0' && ch <= '9') {
+        x = x * 10 + (ch - '0');
+        ch = getchar();
+    }
+    n = x * f;
 }
 
 void solve1() {
     int n, q;
-    cin >> n >> q;
+    read(n);
+    read(q);
     cnts.resize(n);
     blocks.resize(n);
     candidates.resize(n);
     while (q--) {
         int op, i;
-        cin >> op >> i;
+        read(op);
+        read(i);
         if (op == 1) {
             int k, x;
-            cin >> k >> x;
+            read(k);
+            read(x);
             insert(i, k, x);
         } else if (op == 2) {
             int k;
-            cin >> k;
+            read(k);
             remove(i, k);
         } else {
             query(i);

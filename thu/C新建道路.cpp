@@ -6,34 +6,14 @@ const int LOGN = 20;
 const ll INF = 1e18;
 int n;
 vector<vector<pair<int, int>>> adj;
-vector<vector<int>> parent;
-vector<int> depth;
-
 vector<ll> dist;  // 到一号的距离
 vector<int> tsize; // 子树的大小
+vector<int> path; // 基环树的路径
+vector<ll> path_dists;// 基环树上点的前缀距离
+vector<int> counts; // 环上每个点的子树大小
 
-void dijkstra(int start)
-{
-    priority_queue<pair<ll, int>, vector<pair<ll, int>>, greater<>> pq;
-    pq.emplace(0, start);
-    dist[start] = 0;
-
-    while (!pq.empty()) {
-        auto [d, u] = pq.top();
-        pq.pop();
-
-        if (d > dist[u])
-            continue;
-
-        for (const auto [v, w] : adj[u]) {
-            if (dist[v] > dist[u] + w) {
-                dist[v] = dist[u] + w;
-                pq.emplace(dist[v], v);
-            }
-        }
-    }
-}
-
+vector<vector<int>> parent;
+vector<int> depth;
 void dfs_lca(int u, int p, int d)
 {
     depth[u] = d;
@@ -44,23 +24,6 @@ void dfs_lca(int u, int p, int d)
             tsize[u] += tsize[v];
         }
     }
-}
-
-void preprocess()
-{
-    depth.resize(n + 1, 0);
-    dist.resize(n + 1, INF);
-    tsize.resize(n + 1, 1);
-    parent.resize(n + 1, vector<int>(LOGN, 0));
-    dfs_lca(1, 0, 0);
-    for (int j = 1; j < LOGN; j++) {
-        for (int i = 1; i <= n; i++) {
-            if (parent[i][j - 1] != 0) {
-                parent[i][j] = parent[parent[i][j - 1]][j - 1];
-            }
-        }
-    }
-    dijkstra(1);
 }
 
 int lca(int u, int v)
@@ -85,50 +48,54 @@ int lca(int u, int v)
     return parent[u][0];
 }
 
-bool is_ancestor(int u, int v)
+void dfs_dist(int u, int p, ll d)
 {
-    return depth[u] <= depth[v] && lca(u, v) == u;
+    dist[u] = d;
+    for (auto [v, w] : adj[u]) {
+        if (v != p) {
+            dfs_dist(v, u, d + w);
+        }
+    }
 }
 
-ll get_dist(int u, int v)
+void preprocess()
 {
-    return dist[u] + dist[v] - 2 * dist[lca(u, v)];
+    depth.resize(n + 1, 0);
+    dist.resize(n + 1, INF);
+    tsize.resize(n + 1, 1);
+    parent.resize(n + 1, vector<int>(LOGN, 0));
+    dfs_lca(1, 0, 0);
+    for (int j = 1; j < LOGN; j++) {
+        for (int i = 1; i <= n; i++) {
+            if (parent[i][j - 1] != 0) {
+                parent[i][j] = parent[parent[i][j - 1]][j - 1];
+            }
+        }
+    }
+    dfs_dist(1, 0, 0);
 }
 
-ll get_dist(int u, int v, int l)
+void get_path(int u, int v, int l, vector<int>& path)
 {
-    return dist[u] + dist[v] - 2 * dist[l];
-}
-
-vector<int> get_path(int u, int v, int l)
-{
-    vector<int> path1;
-    vector<int> path2;
-
+    // 计算从u到v基环树的路径
     int cur = u;
     while (cur != l) {
-        path1.push_back(cur);
+        path.push_back(cur);
         cur = parent[cur][0];
     }
-    path1.push_back(l);
-
+    path.push_back(l);
+    int len_l = path.size();
     cur = v;
     while (cur != l) {
-        path2.push_back(cur);
+        path.push_back(cur);
         cur = parent[cur][0];
     }
-
-    reverse(path2.begin(), path2.end());
-    path1.insert(path1.end(), path2.begin(), path2.end());
-
-    return path1;
+    reverse(path.begin() + len_l, path.end());
 }
 
-vector<ll> get_counts(const vector<int>& path, int x, int y, int l) {
+void get_counts(const vector<int>& path, int x, int y, int l, vector<int>& counts) {
+    // 计算环上每个点的子树大小，每个子树距离是否改变只和环上的点有关
     int k = path.size();
-
-    vector<ll> counts(k);
-
     bool found_l = false;
     if (x == l) {
         // 此子树全在路径上，自己加上此子树以外的点
@@ -163,32 +130,31 @@ vector<ll> get_counts(const vector<int>& path, int x, int y, int l) {
             }
         }
     }
-    return counts;
 }
+
 
 void solve() {
     int x, y, z;
     cin >> x >> y >> z;
     if (x == y) { cout << 0 << endl; return; }
-
     int l = lca(x, y);
-    vector<int> path = get_path(x, y, l);
+    // k为环上点的数量
+    get_path(x, y, l, path);
     int k = path.size();
-    vector<ll> counts = get_counts(path, x, y, l);
-
-    vector<ll> path_dists(k, 0);
+    counts.resize(k);
+    get_counts(path, x, y, l, counts);
+    path_dists.resize(k, 0);// 从x到y原始路径前缀距离
     for (int i = 1; i < k; ++i) {
         path_dists[i] = path_dists[i-1] + abs(dist[path[i]] - dist[path[i-1]]);
     }
 
-    // pu为u到路径上最近的点，每个点是否更新只和其pu有关
     // d(pu,pv) > d(pu,x) + d(pv,y) + z 才需要更新
     // 两边同时加d(pu,pv)得
     // 2 * d(pu,pv) > d(x,y) + z
-    ll threshold = get_dist(x, y, l) + z;
+    ll threshold = path_dists[k - 1] + z;
     ll ans = 0;
-
     ll sum_counts = 0;
+    // 从枚举环上点(i, j)优化成双指针移动，O(k)
     int p_i = 0;
     for (int j = 1; j < k; ++j) {
         while (p_i < j && 2 * path_dists[p_i] < 2 * path_dists[j] - threshold) {
@@ -197,11 +163,16 @@ void solve() {
         }
         ans += counts[j] * sum_counts;
     }
-    cout << ans << endl;
+    cout << ans << '\n';
+    path.clear();
+    path_dists.clear();
+    counts.clear();
 }
 
 int main()
 {
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
     int m;
     cin >> n >> m;
     adj.resize(n + 1);
